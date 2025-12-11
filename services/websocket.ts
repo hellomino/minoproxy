@@ -1,5 +1,6 @@
 // WebSocketService.ts
 import md5 from "crypto-js/md5";
+import {HeartBeat} from "@/services/msgcode.ts";
 
 type MessageHandler = (data: any) => void;
 
@@ -10,13 +11,13 @@ class WebSocketService {
     private url = "";
 
     private handlers: Record<number, MessageHandler> = {};
-    private messageQueue: any[] = []; // 排队发送
+    private messageQueue: any[] = [];
     private reconnectDelay = 2000;
     private isManualClose = false;
 
     private isOnline = navigator.onLine;
+    public ver = "1.0.0"
 
-    /** 单例模式：外部只能通过 getInstance 获取 */
     public static getInstance(): WebSocketService {
         if (!WebSocketService.instance) {
             WebSocketService.instance = new WebSocketService();
@@ -25,43 +26,37 @@ class WebSocketService {
     }
 
     private constructor() {
-        // 监听浏览器网络情况
         window.addEventListener("online", () => {
-            console.log("网络恢复 online");
             this.isOnline = true;
             this.reconnect();
         });
 
         window.addEventListener("offline", () => {
-            console.warn("网络断开 offline");
             this.isOnline = false;
         });
     }
 
-    /** 初始化 WebSocket 地址 */
     public init(url: string) {
         this.url = url;
     }
 
-    /** 生成 Sec-WebSocket-Protocol */
-    private generateProtocol(): string {
+    private generateProtocol(): string[] {
         const randomStr = Math.random().toString(36).substring(2, 10);
         const timestamp = Math.floor(Date.now() / 1000).toString();
-        const signString = "my_sign_string";
+        const signString = "XentaKillHGLFHkds11";
 
         const token = md5(randomStr + timestamp + signString).toString();
-        return `${randomStr},${timestamp},${token}`;
+        return [randomStr, timestamp, token];
     }
 
-    /** 连接 WebSocket */
+    /** Connect WebSocket */
     public connect() {
         if (!this.url) {
-            console.error("WebSocketService: URL 未初始化");
+            console.error("WebSocketService: URL not initialized.");
             return;
         }
 
         if (!this.isOnline) {
-            console.warn("网络离线，等待重新连接");
             return;
         }
 
@@ -95,35 +90,38 @@ class WebSocketService {
         };
     }
 
-    /** 自动重连 */
+    /** Reconnect */
     private reconnect() {
         if (!this.isOnline) return;
-        console.log("尝试 WebSocket 重连...");
+        console.log("Reconnect WebSocket ...");
         this.connect();
     }
 
-    /** 处理收到的消息 */
+
+    /** hand msg */
     private handleMessage(raw: string) {
         try {
             const msg = JSON.parse(raw);
-            const msgCode = msg.msgCode;
+            const msgCode = msg.code;
 
             if (this.handlers[msgCode]) {
                 this.handlers[msgCode](msg);
             } else {
-                console.warn("未处理的 msgCode: ", msgCode);
+                if(msgCode !== HeartBeat) {
+                    console.warn("invalid msgCode: ", msgCode);
+                }
             }
         } catch (e) {
-            console.error("消息解析失败：", raw);
+            console.error("parse msg error：", raw);
         }
     }
 
-    /** 注册消息码处理 */
+    /** register */
     public on(msgCode: number, handler: MessageHandler) {
         this.handlers[msgCode] = handler;
     }
 
-    /** 自动排队发送 */
+    /** rank */
     public send(data: any) {
         if (!this.socket || this.socket.readyState !== WebSocket.OPEN) {
             this.messageQueue.push(data); // 排队
@@ -132,7 +130,7 @@ class WebSocketService {
         this.socket.send(JSON.stringify(data));
     }
 
-    /** 发送队列中的消息 */
+    /** send */
     private flushQueue() {
         while (this.messageQueue.length > 0) {
             const msg = this.messageQueue.shift();
@@ -140,7 +138,7 @@ class WebSocketService {
         }
     }
 
-    /** 手动关闭 */
+    /** close */
     public close() {
         this.isManualClose = true;
         this.socket?.close();

@@ -4,6 +4,10 @@ import { AppState, ProxyMode, ProxyNode } from '../types';
 import { PowerIcon, ZapIcon, ServerIcon, ChevronRightIcon, CountryFlag } from '../components/Icons';
 import { MOCK_NODES, TRANSLATIONS } from '../constants';
 import { generatePacScript } from '../services/pacGenerator';
+import {T} from "@/components/Toast.tsx";
+import WebSocketService from "@/services/websocket.ts";
+import {RespError, RespTips} from "@/services/msgcode.ts";
+import {encryptString, KKK} from "@/services/aes_gcm_web.ts";
 
 interface DashboardProps {
   state: AppState;
@@ -14,6 +18,14 @@ interface DashboardProps {
 const Dashboard: React.FC<DashboardProps> = ({ state, setState, t }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showNodeList, setShowNodeList] = useState(false);
+  let ws = WebSocketService.getInstance();
+  const {showError,showInfo} = T()
+    ws.on(RespError, (  data)=> {
+        showError(data.code,data.data);
+    })
+    ws.on(RespTips, (  data)=> {
+        showInfo(data.code,data.data);
+    })
 
   // Initialize with a default node if none selected
   useEffect(() => {
