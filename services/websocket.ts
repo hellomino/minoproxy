@@ -80,10 +80,12 @@ class WebSocketService {
             if (!this.isManualClose) {
                 setTimeout(() => this.reconnect(), this.reconnectDelay);
             }
+            this.handlers[30000]({code: 502, data: "you lost connection!"});
         };
 
         this.socket.onerror = (err) => {
             console.error("WebSocket error", err);
+            this.handlers[30000]({code: 500, data: "connect to server error"});
         };
 
         this.socket.onmessage = (evt) => {

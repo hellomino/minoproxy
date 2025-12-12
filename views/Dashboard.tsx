@@ -2,13 +2,14 @@
 import React, { useState, useEffect } from 'react';
 import { AppState, ProxyMode, ProxyNode } from '../types';
 import { PowerIcon, ZapIcon, ServerIcon, ChevronRightIcon, CountryFlag, AndroidIcon, WindowsIcon, AppleIcon, ChromeIcon, RefreshIcon } from '../components/Icons';
-import { MOCK_NODES, TRANSLATIONS } from '../constants';
+import {MOCK_NODES, TRANSLATIONS, updateNodes} from '../constants';
 import { generatePacScript } from '../services/pacGenerator';
 import {T} from "@/components/Toast.tsx";
 import WebSocketService from "@/services/websocket.ts";
 import {ReqLoadServer, ReqLogin, ReqRegister, RespError, RespServerList, RespTips} from "@/services/msgcode.ts";
 import {encryptString, KKK} from "@/services/aes_gcm_web.ts";
 
+let currentNodeId:number = -1;
 
 interface DashboardProps {
     state: AppState;
@@ -30,14 +31,11 @@ const Dashboard: React.FC<DashboardProps> = ({ state, setState, t }) => {
     let [nodes, setNodes] = useState<ProxyNode[]>(MOCK_NODES);
     ws.on(RespServerList, (  data)=> {
         setNodes(data);
-        if (state.selectedNode) {
-            const updatedSelected = data.find(n => n.id === state.selectedNode!.id);
-            if (updatedSelected) {
-                setState(prev => ({ ...prev, selectedNode: updatedSelected }));
-            }
-        } else {
+        updateNodes(data);
+        if(currentNodeId === -1){
             selectNode(data[0]);
-            setState(prev => ({ ...prev, selectedNode: data[0] }));
+            setState(prev => ({ ...prev, selectedNode: data[0]}));
+            currentNodeId = 0
         }
     })
     const load = async ()=> {
@@ -76,6 +74,7 @@ const Dashboard: React.FC<DashboardProps> = ({ state, setState, t }) => {
     };
 
     const selectNode = (node: ProxyNode) => {
+        currentNodeId = node.id;
         setState(prev => ({ ...prev, selectedNode: node }));
         setShowNodeList(false);
         // If connected, we should technically reconnect to apply changes

@@ -1,9 +1,13 @@
 
 import { ProxyNode } from './types';
 
-export const MOCK_NODES: ProxyNode[] = [
-  { id: 1, name: 'Servers Loading', flag: '🇭🇰', countryCode: 'HK', latency: 45, host: 'hk1.minoproxy.com', port: 443, type: 'HTTPS' }
+export var MOCK_NODES: ProxyNode[] = [
+  { id: 1, name: 'Loading ...', flag: '🇭🇰', countryCode: 'HK', latency: 45, host: 'hk1.minoproxy.com', port: 443, type: 'HTTPS' }
 ];
+
+export function updateNodes(nodes: ProxyNode[]) {
+    MOCK_NODES = nodes;
+}
 
 export const CN_DOMAIN_SUFFIXES = [
   "cn", "com.cn", "baidu.com", "qq.com", "taobao.com", "jd.com", "weibo.com", "alipay.com"
