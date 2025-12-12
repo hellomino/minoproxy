@@ -4,7 +4,7 @@ import {TRANSLATIONS} from '../constants';
 import {T} from "@/components/Toast.tsx";
 import WebSocketService from "@/services/websocket.ts";
 import {ReqLogin, ReqRegister, RespError, RespLogin, RespTips} from "@/services/msgcode.ts";
-import {encryptString, KKK} from "@/services/aes_gcm_web.ts";
+import {encryptString, KKK, setClue} from "@/services/aes_gcm_web.ts";
 
 interface LoginProps {
     onLogin: (user: User) => void;
@@ -42,6 +42,7 @@ const Login: React.FC<LoginProps> = ({onLogin, onCancel, t}) => {
                 plan: data.plan,
                 expiryDate: data.until
             });
+            setClue(data.clue);
         })
         setTimeout(() => {
             setIsLoading(false);

@@ -5,7 +5,7 @@ export enum ProxyMode {
 }
 
 export interface ProxyNode {
-  id: string;
+  id: number;
   name: string;
   flag: string; // Keep for fallback if needed, or deprecate
   countryCode: string; // ISO 3166-1 alpha-2 code (e.g. 'JP', 'US')

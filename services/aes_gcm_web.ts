@@ -4,6 +4,10 @@
 //   const plain = await decryptString(passphrase, cipherB64)
 
 export var KKK = "XentaKillHGLFHkds11";
+export var Clue = "Clue";
+export function setClue(clue: string) {
+    Clue = clue;
+}
 
 function bufToBase64(buf) {
     const bytes = new Uint8Array(buf);

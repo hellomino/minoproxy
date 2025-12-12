@@ -6,7 +6,9 @@ import { MOCK_NODES, TRANSLATIONS } from '../constants';
 import { generatePacScript } from '../services/pacGenerator';
 import {T} from "@/components/Toast.tsx";
 import WebSocketService from "@/services/websocket.ts";
-import {RespError, RespTips} from "@/services/msgcode.ts";
+import {ReqLoadServer, ReqLogin, ReqRegister, RespError, RespServerList, RespTips} from "@/services/msgcode.ts";
+import {encryptString, KKK} from "@/services/aes_gcm_web.ts";
+
 
 interface DashboardProps {
     state: AppState;
@@ -25,13 +27,31 @@ const Dashboard: React.FC<DashboardProps> = ({ state, setState, t }) => {
     ws.on(RespTips, (  data)=> {
         showInfo(data.code,data.data);
     })
-    const [nodes, setNodes] = useState<ProxyNode[]>(MOCK_NODES);
+    let [nodes, setNodes] = useState<ProxyNode[]>(MOCK_NODES);
+    ws.on(RespServerList, (  data)=> {
+        setNodes(data);
+        if (state.selectedNode) {
+            const updatedSelected = data.find(n => n.id === state.selectedNode!.id);
+            if (updatedSelected) {
+                setState(prev => ({ ...prev, selectedNode: updatedSelected }));
+            }
+        } else {
+            selectNode(data[0]);
+            setState(prev => ({ ...prev, selectedNode: data[0] }));
+        }
+    })
+    const load = async ()=> {
+        let loadReq = await encryptString(KKK, JSON.stringify({"ip": "127.0.0.1"}));
+        ws.send({
+            "code": ReqLoadServer,
+            "data": loadReq
+        })
+    }
     const [isRefreshing, setIsRefreshing] = useState(false);
-
     // Initialize with a default node if none selected
     useEffect(() => {
         if (!state.selectedNode) {
-            setState(prev => ({ ...prev, selectedNode: MOCK_NODES[0] }));
+            load().then(r => {});
         }
     }, [state.selectedNode, setState]);
 
@@ -71,24 +91,12 @@ const Dashboard: React.FC<DashboardProps> = ({ state, setState, t }) => {
     };
 
     const refreshNodes = () => {
-        setIsRefreshing(true);
-        setTimeout(() => {
-            const newNodes = nodes.map(node => ({
-                ...node,
-                latency: Math.floor(Math.random() * 200) + 20
-            }));
-            setNodes(newNodes);
-
-            // Update selected node if it exists in the new list to show new latency
-            if (state.selectedNode) {
-                const updatedSelected = newNodes.find(n => n.id === state.selectedNode!.id);
-                if (updatedSelected) {
-                    setState(prev => ({ ...prev, selectedNode: updatedSelected }));
-                }
-            }
-
-            setIsRefreshing(false);
-        }, 1000);
+        load().then(r => {
+            setIsRefreshing(true);
+            setTimeout(() => {
+                setIsRefreshing(false);
+            }, 3000);
+        });
     };
 
     const getLatencyColor = (latency: number) => {
