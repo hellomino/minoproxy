@@ -60,6 +60,11 @@ const Profile: React.FC<ProfileProps> = ({ user, onLogout, onLogin, language, se
                                 <div className={`font-bold ${user.plan === 'FREE' ? 'text-slate-600' : 'text-indigo-600'}`}>
                                     {user.plan} {user.plan !== 'FREE' && t('member')}
                                 </div>
+                                {user.plan !== 'FREE' && user.expiryDate && (
+                                    <div className="text-[10px] text-slate-500 font-medium mt-1">
+                                        {t('expires')}: {new Date(user.expiryDate).toLocaleDateString()}
+                                    </div>
+                                )}
                             </div>
                             {user.plan === 'FREE' && (
                                 <button
