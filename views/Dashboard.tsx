@@ -94,7 +94,7 @@ const Dashboard: React.FC<DashboardProps> = ({ state, setState, t }) => {
             setIsRefreshing(true);
             setTimeout(() => {
                 setIsRefreshing(false);
-            }, 3000);
+            }, 1000);
         });
     };
 

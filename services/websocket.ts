@@ -71,12 +71,11 @@ class WebSocketService {
         this.socket = new WebSocket(this.url, protocol);
 
         this.socket.onopen = () => {
-            console.log("WebSocket connected");
+            console.log("server connected");
             this.flushQueue();
         };
 
         this.socket.onclose = () => {
-            console.log("WebSocket closed");
             if (!this.isManualClose) {
                 setTimeout(() => this.reconnect(), this.reconnectDelay);
             }
@@ -84,7 +83,6 @@ class WebSocketService {
         };
 
         this.socket.onerror = (err) => {
-            console.error("WebSocket error", err);
             this.handlers[30000]({code: 500, data: "connect to server error"});
         };
 
