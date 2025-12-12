@@ -1,6 +1,7 @@
 // WebSocketService.ts
 import md5 from "crypto-js/md5";
 import {HeartBeat} from "@/services/msgcode.ts";
+import {decryptString, KKK} from "@/services/aes_gcm_web.ts";
 
 type MessageHandler = (data: any) => void;
 
@@ -86,7 +87,8 @@ class WebSocketService {
         };
 
         this.socket.onmessage = (evt) => {
-            this.handleMessage(evt.data);
+            this.handleMessage(evt.data).then(r => {
+            });
         };
     }
 
@@ -99,15 +101,21 @@ class WebSocketService {
 
 
     /** hand msg */
-    private handleMessage(raw: string) {
+    private async handleMessage(raw: string) {
         try {
             const msg = JSON.parse(raw);
             const msgCode = msg.code;
 
             if (this.handlers[msgCode]) {
-                this.handlers[msgCode](msg);
+                if (msgCode >= 30000) {
+                    this.handlers[msgCode](msg);
+                } else {
+                    const dataString = await decryptString(KKK, msg.data)
+                    const data = JSON.parse(dataString)
+                    this.handlers[msgCode](data);
+                }
             } else {
-                if(msgCode !== HeartBeat) {
+                if (msgCode !== HeartBeat) {
                     console.warn("invalid msgCode: ", msgCode);
                 }
             }

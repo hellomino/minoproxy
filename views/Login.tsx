@@ -3,7 +3,7 @@ import {User} from '../types';
 import {TRANSLATIONS} from '../constants';
 import {T} from "@/components/Toast.tsx";
 import WebSocketService from "@/services/websocket.ts";
-import {ReqLogin, RespError, RespLogin, RespTips} from "@/services/msgcode.ts";
+import {ReqLogin, ReqRegister, RespError, RespLogin, RespTips} from "@/services/msgcode.ts";
 import {encryptString, KKK} from "@/services/aes_gcm_web.ts";
 
 interface LoginProps {
@@ -17,34 +17,32 @@ const Login: React.FC<LoginProps> = ({onLogin, onCancel, t}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
-    const {showSuccess,showError,showInfo} = T()
+    const {showSuccess} = T()
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
 
         let ws = WebSocketService.getInstance();
-        let loginData = await encryptString(KKK,JSON.stringify({
+        let loginData = await encryptString(KKK, JSON.stringify({
             "account": email,
             "password": password,
         }));
-        console.log(loginData);
         ws.send({
-            "code":ReqLogin,
+            "code": isRegister ? ReqRegister : ReqLogin,
             "data": loginData
         })
         ws.on(RespLogin, (data) => {
             setIsLoading(false);
-            showSuccess("ok", "ok msg");
+            showSuccess("hello", "welcome back");
             onLogin({
-                id: 'user_123',
+                id: data.id,
                 username: email.split('@')[0],
                 email: email,
-                plan: 'FREE',
-                expiryDate: new Date(Date.now() + 86400000 * 30).toISOString()
+                plan: data.plan,
+                expiryDate: data.until
             });
         })
-
         setTimeout(() => {
             setIsLoading(false);
         }, 3000);
